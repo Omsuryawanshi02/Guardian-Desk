@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode:"class",
+    theme:{ extend:{
+      colors:{ primary:"#0b7dda","bg-light":"#f5f7f8","bg-dark":"#101a22" },
+      fontFamily:{ display:["Inter","sans-serif"] },
+    }}
+  };
+</script>
+<title> Guardian Desk — System Security Audit</title>
+<style>
+  body { font-family:'Inter',sans-serif; }
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .fade-in { animation: fadeIn .4s ease both; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+</style>
+</head>
+<body class="bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100">
+<div class="flex min-h-screen flex-col">
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<header class="sticky top-0 z-50 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-10 py-3">
+  <div class="flex items-center gap-8">
+    <div class="flex items-center gap-3">
+      <div class="size-8 flex items-center justify-center bg-primary text-white rounded-lg">
+        <span class="material-symbols-outlined">security</span>
+      </div>
+      <h2 class="text-lg font-bold tracking-tight">Guardian Desk</h2>
+    </div>
+    <nav class="hidden md:flex items-center gap-8">
+      <a class="text-slate-500 hover:text-primary text-sm font-medium transition-colors" href="/dashboard">Dashboard</a>
+      <a class="text-primary text-sm font-bold border-b-2 border-primary py-1" href="/audit">Audit</a>
+      <a class="text-slate-500 hover:text-primary text-sm font-medium transition-colors" href="/">Home</a>
+    </nav>
+  </div>
+  <button id="scanBtn" onclick="runScan()"
+          class="flex items-center gap-2 rounded-lg h-10 px-5 bg-primary text-white text-sm font-bold hover:bg-blue-600 transition-all shadow-lg shadow-primary/20">
+    <span id="scanIcon" class="material-symbols-outlined text-lg">play_circle</span>
+    <span id="scanText">Run Scan</span>
+  </button>
+</header>
+
+<div class="flex flex-1">
+<!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
+<aside class="hidden md:flex w-60 flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 gap-1">
+  <div class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium" onclick="scrollTo(0,0)">
+    <span class="material-symbols-outlined">grid_view</span> Overview
+  </div>
+  <div class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium" onclick="document.getElementById('portsSection').scrollIntoView({behavior:'smooth'})">
+    <span class="material-symbols-outlined">lan</span> Open Ports
+  </div>
+  <div class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary cursor-pointer text-sm font-bold">
+    <span class="material-symbols-outlined">fact_check</span> Audit Report
+  </div>
+  <div class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-sm font-medium" onclick="document.getElementById('resourcesSection').scrollIntoView({behavior:'smooth'})">
+    <span class="material-symbols-outlined">bar_chart</span> Resources
+  </div>
+  <a href="/dashboard" class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium mt-auto">
+    <span class="material-symbols-outlined">settings</span> Dashboard
+  </a>
+</aside>
+
+<!-- ── Main Content ────────────────────────────────────────────────────────── -->
+<main class="flex-1 overflow-y-auto">
+<div class="max-w-[1200px] mx-auto p-6 lg:p-10 space-y-10">
+
+  <!-- Page Header -->
+  <div class="flex flex-wrap items-end justify-between gap-6">
+    <div>
+      <div class="flex items-center gap-2 text-slate-400 text-xs font-medium uppercase tracking-widest mb-2">
+        <span class="material-symbols-outlined text-sm">home</span> Guardian / Security / Audit
+      </div>
+      <h1 class="text-3xl font-black leading-tight">System Security Audit</h1>
+      <p id="scanSubtitle" class="text-slate-500 text-base font-medium mt-1">Click "Run Scan" to get live data from your system.</p>
+    </div>
+  </div>
+
+  <!-- Loading / Error state -->
+  <div id="loadingState" class="hidden flex flex-col items-center justify-center py-20 gap-4">
+    <span class="material-symbols-outlined text-primary text-5xl spin">sync</span>
+    <p class="text-slate-500 font-medium">Running system audit…</p>
+  </div>
+  <div id="errorState" class="hidden rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 p-6">
+    <h3 class="font-bold text-red-700 mb-1">Backend Offline</h3>
+    <p id="errorMsg" class="text-red-600 text-sm">Make sure <code class="bg-red-100 px-1 rounded">app.py</code> is running on port 5000.</p>
+  </div>
+
+  <!-- Results (hidden until scan runs) -->
+  <div id="auditResults" class="hidden fade-in space-y-10">
+
+    <!-- Status Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="group rounded-xl p-6 bg-white dark:bg-slate-900 border-l-4 border-l-primary border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
+        <div class="flex justify-between items-start mb-3">
+          <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">CPU Usage</p>
+          <span class="material-symbols-outlined text-primary">memory</span>
+        </div>
+        <p id="cpuVal" class="text-3xl font-black">—</p>
+        <p class="text-slate-400 text-xs mt-1">Current utilization</p>
+      </div>
+      <div class="group rounded-xl p-6 bg-white dark:bg-slate-900 border-l-4 border-l-emerald-500 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
+        <div class="flex justify-between items-start mb-3">
+          <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Memory</p>
+          <span class="material-symbols-outlined text-emerald-500">storage</span>
+        </div>
+        <p id="memVal" class="text-3xl font-black">—</p>
+        <p id="memDetail" class="text-slate-400 text-xs mt-1">—</p>
+      </div>
+      <div class="group rounded-xl p-6 bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
+        <div class="flex justify-between items-start mb-3">
+          <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Disk</p>
+          <span class="material-symbols-outlined text-amber-500">hard_drive</span>
+        </div>
+        <p id="diskVal" class="text-3xl font-black">—</p>
+        <p id="diskDetail" class="text-slate-400 text-xs mt-1">—</p>
+      </div>
+      <div class="group rounded-xl p-6 bg-white dark:bg-slate-900 border-l-4 border-l-purple-500 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
+        <div class="flex justify-between items-start mb-3">
+          <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Processes</p>
+          <span class="material-symbols-outlined text-purple-500">apps</span>
+        </div>
+        <p id="procVal" class="text-3xl font-black">—</p>
+        <p class="text-slate-400 text-xs mt-1">Running processes</p>
+      </div>
+    </div>
+
+    <!-- OS Info + Boot -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div id="osCard" class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">computer</span> OS Information
+        </h3>
+        <div id="osContent"></div>
+      </div>
+      <div id="resourcesSection" class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-emerald-500">monitor_heart</span> Resource Usage
+        </h3>
+        <div id="resourceBars"></div>
+      </div>
+    </div>
+
+    <!-- Open Ports -->
+    <div id="portsSection">
+      <div class="flex items-center justify-between mb-4 px-1">
+        <h2 class="text-xl font-bold">Open Listening Ports</h2>
+        <span id="portsBadge" class="text-sm text-slate-500 font-medium"></span>
+      </div>
+      <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <div class="flex items-center bg-slate-50 dark:bg-slate-800 px-6 py-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="w-20 text-xs font-bold text-slate-400 uppercase tracking-widest">Port</div>
+          <div class="flex-1 text-xs font-bold text-slate-400 uppercase tracking-widest">Service</div>
+          <div class="w-40 text-xs font-bold text-slate-400 uppercase tracking-widest">Address</div>
+          <div class="w-24 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Risk</div>
+        </div>
+        <div id="portsList"></div>
+      </div>
+    </div>
+
+  </div><!-- /auditResults -->
+
+</div>
+</main>
+</div>
+</div>
+
+<script>
+const API = '';
+const RISKY_PORTS = [21,22,23,25,80,443,445,139,3306,3389,5432,6379,8080,8443,27017];
+const RISK_MAP = {
+  21: ['FTP — plaintext file transfer','high'],
+  22: ['SSH — remote shell access','medium'],
+  23: ['Telnet — plaintext remote access','high'],
+  25: ['SMTP — mail server','medium'],
+  80: ['HTTP — unencrypted web','low'],
+  443: ['HTTPS — encrypted web','low'],
+  445: ['SMB — Windows file sharing','high'],
+  139: ['NetBIOS — legacy Windows','high'],
+  3306: ['MySQL — database port','medium'],
+  3389: ['RDP — remote desktop','high'],
+  5432: ['PostgreSQL — database port','medium'],
+  6379: ['Redis — cache/message broker','high'],
+  8080: ['HTTP-alt — dev/proxy port','low'],
+  27017: ['MongoDB — NoSQL database','medium'],
+};
+
+function formatBytes(b) {
+  const u = ['B','KB','MB','GB','TB'];
+  let i = 0;
+  while (b >= 1024 && i < u.length-1) { b/=1024; i++; }
+  return b.toFixed(1)+' '+u[i];
+}
+
+function kv(label, val) {
+  return `<div class="flex justify-between py-1.5 border-b border-slate-50 dark:border-slate-800 text-sm">
+    <span class="text-slate-500 font-medium">${label}</span>
+    <span class="font-semibold">${val}</span>
+  </div>`;
+}
+
+function progressBar(pct, color) {
+  return `<div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+    <div class="h-2 rounded-full ${color} transition-all duration-700" style="width:${pct}%"></div>
+  </div>`;
+}
+
+async function runScan() {
+  const btn  = document.getElementById('scanBtn');
+  const icon = document.getElementById('scanIcon');
+  const text = document.getElementById('scanText');
+  btn.disabled = true;
+  icon.classList.add('spin');
+  text.textContent = 'Scanning…';
+  document.getElementById('loadingState').classList.remove('hidden');
+  document.getElementById('errorState').classList.add('hidden');
+  document.getElementById('auditResults').classList.add('hidden');
+
+  try {
+    const r = await fetch(`${API}/api/audit`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+
+    document.getElementById('scanSubtitle').textContent =
+      `Last scan: ${new Date(d.scan_time).toLocaleString()} · Boot: ${new Date(d.boot_time).toLocaleString()}`;
+
+    // Stat cards
+    const res = d.resources;
+    const cpuColor = res.cpu_percent > 80 ? 'text-red-500' : res.cpu_percent > 50 ? 'text-amber-500' : 'text-emerald-500';
+    document.getElementById('cpuVal').innerHTML = `<span class="${cpuColor}">${res.cpu_percent}%</span>`;
+    document.getElementById('memVal').innerHTML = `<span class="${res.memory.percent>80?'text-red-500':res.memory.percent>60?'text-amber-500':'text-emerald-500'}">${res.memory.percent}%</span>`;
+    document.getElementById('memDetail').textContent = `${formatBytes(res.memory.available)} free of ${formatBytes(res.memory.total)}`;
+    document.getElementById('diskVal').innerHTML = `<span class="${res.disk.percent>85?'text-red-500':res.disk.percent>60?'text-amber-500':'text-emerald-500'}">${res.disk.percent}%</span>`;
+    document.getElementById('diskDetail').textContent = `${formatBytes(res.disk.free)} free of ${formatBytes(res.disk.total)}`;
+    document.getElementById('procVal').textContent = d.process_count;
+
+    // OS Info
+    const os = d.os_info;
+    document.getElementById('osContent').innerHTML = [
+      ['System',   os.system],
+      ['Release',  os.release],
+      ['Machine',  os.machine],
+      ['Hostname', os.hostname],
+      ['Processor',os.processor || 'N/A'],
+    ].map(([l,v])=>kv(l,v)).join('');
+
+    // Resource bars
+    document.getElementById('resourceBars').innerHTML = [
+      ['CPU',    res.cpu_percent,  res.cpu_percent>80?'bg-red-500':res.cpu_percent>50?'bg-amber-500':'bg-primary'],
+      ['Memory', res.memory.percent, res.memory.percent>80?'bg-red-500':res.memory.percent>60?'bg-amber-500':'bg-emerald-500'],
+      ['Disk',   res.disk.percent, res.disk.percent>85?'bg-red-500':res.disk.percent>60?'bg-amber-500':'bg-amber-400'],
+    ].map(([l,pct,c])=>`
+      <div class="mb-4">
+        <div class="flex justify-between text-sm mb-1">
+          <span class="font-medium text-slate-600 dark:text-slate-400">${l}</span>
+          <span class="font-bold">${pct}%</span>
+        </div>
+        ${progressBar(pct,c)}
+      </div>`).join('');
+
+    // Open Ports
+    const ports = d.open_ports;
+    document.getElementById('portsBadge').textContent = `${ports.length} port(s) found`;
+    const riskyPorts = ports.filter(p => [21,23,3389,445,139,6379].includes(p.port));
+    if (riskyPorts.length) {
+      document.getElementById('portsBadge').innerHTML +=
+        ` · <span class="text-red-500 font-bold">${riskyPorts.length} risky</span>`;
+    }
+
+    document.getElementById('portsList').innerHTML = ports.length === 0
+      ? '<div class="px-6 py-8 text-center text-slate-400">No listening ports detected.</div>'
+      : ports.map(p => {
+          const info = RISK_MAP[p.port] || [p.service || 'Unknown service', 'low'];
+          const [desc, risk] = info;
+          const riskStyle = risk==='high'  ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                            risk==='medium'? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' :
+                                            'bg-slate-100 dark:bg-slate-800 text-slate-500';
+          return `<div class="flex items-center px-6 py-4 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all">
+            <div class="w-20 font-mono font-bold text-primary text-sm">${p.port}</div>
+            <div class="flex-1">
+              <p class="font-semibold text-sm">${p.service || 'unknown'}</p>
+              <p class="text-xs text-slate-400">${desc}</p>
+            </div>
+            <div class="w-40 text-xs font-mono text-slate-400">${p.address || '0.0.0.0'}</div>
+            <div class="w-24 flex justify-end">
+              <span class="px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${riskStyle}">${risk}</span>
+            </div>
+          </div>`;
+        }).join('');
+
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('auditResults').classList.remove('hidden');
+
+  } catch(e) {
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('errorState').classList.remove('hidden');
+    document.getElementById('errorMsg').textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    icon.classList.remove('spin');
+    text.textContent = 'Run Scan';
+  }
+}
+</script>
+</body>
+</html>

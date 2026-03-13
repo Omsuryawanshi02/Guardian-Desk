@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode:"class",
+    theme:{ extend:{
+      colors:{ primary:"#0b7dda","bg-light":"#f5f7f8","bg-dark":"#101a22" },
+      fontFamily:{ display:["Inter","sans-serif"] },
+    }}
+  };
+</script>
+<title>Sophos Central Security Dashboard</title>
+<style>
+  body { font-family:'Inter',sans-serif; }
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .fade-in { animation: fadeIn .4s ease both; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+</style>
+</head>
+<body class="bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100">
+<div class="flex min-h-screen flex-col">
+
+<!-- ── Top Nav ─────────────────────────────────────────────────────────────── -->
+<header class="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 lg:px-10">
+  <div class="flex items-center gap-8">
+    <div class="flex items-center gap-3">
+      <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
+        <span class="material-symbols-outlined !text-xl">shield_with_heart</span>
+      </div>
+      <h2 class="text-xl font-extrabold tracking-tight">Guardian Desk</h2>
+    </div>
+    <nav class="hidden md:flex items-center gap-6">
+      <a class="text-sm font-bold text-primary" href="/dashboard">Dashboard</a>
+      <a class="text-sm font-medium text-slate-500 hover:text-primary transition-colors" href="/audit">Audit</a>
+      <a class="text-sm font-medium text-slate-500 hover:text-primary transition-colors" href="/">Home</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-3">
+    <button onclick="loadAll()" title="Refresh all data"
+            class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-primary/10 hover:text-primary transition-colors">
+      <span id="refreshIcon" class="material-symbols-outlined !text-xl">refresh</span>
+    </button>
+    <div id="statusDot" class="flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-500">
+      <span class="h-2 w-2 rounded-full bg-slate-400 inline-block"></span> Connecting…
+    </div>
+  </div>
+</header>
+
+<div class="flex flex-1">
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
+<aside class="hidden w-60 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 lg:flex gap-1">
+  <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 mb-2">Modules</p>
+  <a onclick="showSection('overview')" class="sidebar-link active flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer text-sm font-semibold">
+    <span class="material-symbols-outlined !text-xl">grid_view</span> Overview
+  </a>
+  <a onclick="showSection('network')" id="nav-network" class="sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+    <span class="material-symbols-outlined !text-xl">hub</span> Network
+  </a>
+  <a onclick="showSection('fim')" id="nav-fim" class="sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+    <span class="material-symbols-outlined !text-xl">find_in_page</span> File Integrity
+  </a>
+  <a onclick="showSection('logs')" id="nav-logs" class="sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+    <span class="material-symbols-outlined !text-xl">contract_edit</span> Logs
+  </a>
+  <a onclick="showSection('password')" class="sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+    <span class="material-symbols-outlined !text-xl">key</span> Password
+  </a>
+  <div class="mt-auto border-t border-slate-100 dark:border-slate-800 pt-4">
+    <a href="/audit" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary transition-colors">
+      <span class="material-symbols-outlined !text-xl">fact_check</span> Full Audit →
+    </a>
+  </div>
+</aside>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<main class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-8">
+
+  <!-- ── OVERVIEW ─────────────────────────────────────────────────────────── -->
+  <section id="section-overview" class="fade-in space-y-8">
+    <!-- Risk Score Hero -->
+    <div class="relative overflow-hidden rounded-2xl bg-slate-900 p-8">
+      <div class="absolute inset-0 bg-gradient-to-br from-primary/30 via-slate-900 to-slate-900 opacity-80"></div>
+      <div class="relative z-10 flex flex-wrap items-center justify-between gap-6">
+        <div>
+          <p class="text-slate-400 text-sm font-semibold mb-1">Live Risk Score</p>
+          <div class="flex items-baseline gap-3">
+            <h1 id="riskScore" class="text-6xl font-black text-white">—</h1>
+            <span class="text-slate-400 text-2xl">/100</span>
+          </div>
+          <p id="riskLabel" class="text-slate-300 font-semibold mt-1">Loading…</p>
+        </div>
+        <div id="alertsList" class="flex flex-col gap-2 min-w-60 max-w-sm">
+          <div class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Active Alerts</div>
+          <p class="text-slate-400 text-sm">Loading alerts…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div class="stat-card rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Processes</p>
+        <p id="statProcesses" class="text-2xl font-black">—</p>
+      </div>
+      <div class="stat-card rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Open Ports</p>
+        <p id="statPorts" class="text-2xl font-black">—</p>
+      </div>
+      <div class="stat-card rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Net Devices</p>
+        <p id="statDevices" class="text-2xl font-black">—</p>
+      </div>
+      <div class="stat-card rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Failed Logins</p>
+        <p id="statLogins" class="text-2xl font-black text-red-500">—</p>
+      </div>
+      <div class="stat-card rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">FIM Monitored</p>
+        <p id="statFimMonitored" class="text-2xl font-black">—</p>
+      </div>
+      <div class="stat-card rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">FIM Modified</p>
+        <p id="statFimModified" class="text-2xl font-black text-amber-500">—</p>
+      </div>
+    </div>
+
+    <!-- Quick cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div onclick="showSection('network')" class="group cursor-pointer flex flex-col gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 hover:shadow-md hover:border-primary/30 transition-all">
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined !text-3xl">hub</span>
+        </div>
+        <h3 class="text-lg font-bold">Network Monitor</h3>
+        <p class="text-sm text-slate-500">Live interface stats, connection states and remote IPs.</p>
+        <span class="text-primary text-sm font-bold flex items-center gap-1 mt-auto">View Traffic <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+      </div>
+      <div onclick="showSection('fim')" class="group cursor-pointer flex flex-col gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 hover:shadow-md hover:border-primary/30 transition-all">
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined !text-3xl">find_in_page</span>
+        </div>
+        <h3 class="text-lg font-bold">File Integrity</h3>
+        <p class="text-sm text-slate-500">SHA-256 hash checking on monitored system files.</p>
+        <span class="text-primary text-sm font-bold flex items-center gap-1 mt-auto">Check Files <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+      </div>
+      <div onclick="showSection('logs')" class="group cursor-pointer flex flex-col gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 hover:shadow-md hover:border-primary/30 transition-all">
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined !text-3xl">content_copy</span>
+        </div>
+        <h3 class="text-lg font-bold">Log Monitor</h3>
+        <p class="text-sm text-slate-500">Auth events, failed logins, sudo usage and syslog errors.</p>
+        <span class="text-primary text-sm font-bold flex items-center gap-1 mt-auto">View Logs <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── NETWORK ───────────────────────────────────────────────────────────── -->
+  <section id="section-network" class="hidden fade-in space-y-6">
+    <h2 class="text-2xl font-bold">Network Monitor</h2>
+    <div id="networkContent" class="text-slate-500">Loading network data…</div>
+  </section>
+
+  <!-- ── FILE INTEGRITY ────────────────────────────────────────────────────── -->
+  <section id="section-fim" class="hidden fade-in space-y-6">
+    <h2 class="text-2xl font-bold">File Integrity Monitor</h2>
+    <div id="fimContent" class="text-slate-500">Loading FIM data…</div>
+  </section>
+
+  <!-- ── LOGS ──────────────────────────────────────────────────────────────── -->
+  <section id="section-logs" class="hidden fade-in space-y-6">
+    <h2 class="text-2xl font-bold">Security Log Monitor</h2>
+    <div id="logsContent" class="text-slate-500">Loading log data…</div>
+  </section>
+
+  <!-- ── PASSWORD ──────────────────────────────────────────────────────────── -->
+  <section id="section-password" class="hidden fade-in space-y-6">
+    <h2 class="text-2xl font-bold">Password Strength Analyzer</h2>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 max-w-xl">
+      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Test a Password</label>
+      <div class="relative mb-4">
+        <input id="pwdDash" type="password" placeholder="Enter password to analyze…"
+               class="w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 px-4 py-3 text-base focus:ring-2 focus:ring-primary focus:border-transparent pr-12"/>
+        <button onclick="toggleDashPwd()" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
+          <span id="dashEye" class="material-symbols-outlined">visibility</span>
+        </button>
+      </div>
+      <button onclick="analyzePwd()" class="w-full rounded-lg bg-primary text-white font-bold py-3 hover:bg-blue-600 transition-colors">Analyze Password</button>
+      <div id="pwdDashResult" class="mt-6 hidden space-y-4">
+        <div class="flex justify-between text-sm mb-1">
+          <span class="text-slate-600">Strength Score</span>
+          <span id="pwdDashStrength" class="font-bold text-emerald-600">—</span>
+        </div>
+        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+          <div id="pwdDashBar" class="h-2 rounded-full transition-all duration-500 bg-slate-400" style="width:0%"></div>
+        </div>
+        <div id="pwdDashChecks" class="grid grid-cols-3 gap-2"></div>
+        <div id="pwdDashMeta" class="text-sm text-slate-500 space-y-1"></div>
+        <div id="pwdDashSuggestions" class="space-y-1"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+</div>
+</div>
+
+<script>
+const API = '';
+let currentSection = 'overview';
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showSection(name) {
+  document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
+  document.getElementById('section-' + name).classList.remove('hidden');
+  document.querySelectorAll('.sidebar-link').forEach(l => {
+    l.classList.remove('active','bg-primary','text-white');
+    l.classList.add('text-slate-500');
+  });
+  currentSection = name;
+  // Lazy-load data for sections
+  if (name === 'network')  loadNetwork();
+  if (name === 'fim')      loadFIM();
+  if (name === 'logs')     loadLogs();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function badge(level) {
+  const map = { high:'bg-red-100 text-red-700', medium:'bg-amber-100 text-amber-700', low:'bg-blue-100 text-blue-700' };
+  return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${map[level]||'bg-slate-100 text-slate-600'}">${level}</span>`;
+}
+function card(content) {
+  return `<div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">${content}</div>`;
+}
+function kv(label, val) {
+  return `<div class="flex justify-between py-1.5 border-b border-slate-50 dark:border-slate-800 text-sm"><span class="text-slate-500 font-medium">${label}</span><span class="font-bold">${val}</span></div>`;
+}
+function formatBytes(b) {
+  if (!b) return '0 B';
+  const units = ['B','KB','MB','GB','TB'];
+  let i = 0;
+  while (b >= 1024 && i < units.length-1) { b/=1024; i++; }
+  return b.toFixed(1)+' '+units[i];
+}
+
+// ── Dashboard Overview ────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const r = await fetch(`${API}/api/dashboard`);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+
+    document.getElementById('riskScore').textContent = d.risk_score;
+    const color = d.risk_score >= 70 ? 'text-red-400' : d.risk_score >= 40 ? 'text-amber-400' : 'text-emerald-400';
+    document.getElementById('riskScore').className = `text-6xl font-black ${color}`;
+    document.getElementById('riskLabel').textContent =
+      d.risk_score >= 70 ? '⚠ High Risk — Immediate attention required' :
+      d.risk_score >= 40 ? '⚡ Medium Risk — Review alerts below' : '✅ Low Risk — System looks healthy';
+
+    // Alerts
+    const al = document.getElementById('alertsList');
+    if (!d.alerts.length) {
+      al.innerHTML = '<div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Active Alerts</div><p class="text-emerald-400 text-sm font-semibold">✅ No active alerts</p>';
+    } else {
+      al.innerHTML = '<div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Active Alerts</div>' +
+        d.alerts.map(a => `<div class="flex items-center gap-2 text-sm text-white">${badge(a.level)} <span>${a.msg}</span></div>`).join('');
+    }
+
+    // Stats
+    const s = d.summary;
+    document.getElementById('statProcesses').textContent   = s.processes;
+    document.getElementById('statPorts').textContent       = s.open_ports;
+    document.getElementById('statDevices').textContent     = s.network_devices;
+    document.getElementById('statLogins').textContent      = s.failed_logins;
+    document.getElementById('statFimMonitored').textContent = s.fim_monitored;
+    document.getElementById('statFimModified').textContent  = s.fim_modified;
+
+    setStatus(true);
+  } catch {
+    setStatus(false);
+    document.getElementById('riskLabel').textContent = 'Backend offline — run app.py to see live data';
+  }
+}
+
+function setStatus(online) {
+  const dot = document.getElementById('statusDot');
+  dot.innerHTML = online
+    ? '<span class="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span> <span class="text-emerald-600">Online</span>'
+    : '<span class="h-2 w-2 rounded-full bg-red-500 inline-block"></span> <span class="text-red-500">Offline</span>';
+}
+
+// ── Network ───────────────────────────────────────────────────────────────────
+async function loadNetwork() {
+  const el = document.getElementById('networkContent');
+  el.innerHTML = '<p class="text-slate-400">Loading…</p>';
+  try {
+    const r = await fetch(`${API}/api/network`);
+    const d = await r.json();
+    const io = d.io_stats;
+    el.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        ${card(`<h3 class="font-bold mb-4 text-base">Host Info</h3>
+          ${kv('Hostname', d.hostname)}
+          ${kv('Local IP', d.local_ip)}
+          ${kv('Scanned', new Date(d.scanned_at).toLocaleTimeString())}`)}
+        ${card(`<h3 class="font-bold mb-4 text-base">I/O Statistics</h3>
+          ${kv('Bytes Sent', formatBytes(io.bytes_sent))}
+          ${kv('Bytes Recv', formatBytes(io.bytes_recv))}
+          ${kv('Packets Sent', io.packets_sent.toLocaleString())}
+          ${kv('Packets Recv', io.packets_recv.toLocaleString())}
+          ${kv('Errors In/Out', io.errin+' / '+io.errout)}`)}
+        ${card(`<h3 class="font-bold mb-4 text-base">Connection States</h3>
+          ${Object.entries(d.connections_summary).map(([k,v])=>kv(k.charAt(0).toUpperCase()+k.slice(1).replace('_',' '),v)).join('')}`)}
+        ${card(`<h3 class="font-bold mb-4 text-base">Remote IPs Detected (${d.devices.length})</h3>
+          ${d.devices.length === 0
+            ? '<p class="text-slate-400 text-sm">No remote connections detected.</p>'
+            : d.devices.slice(0,20).map(dv=>`<div class="flex items-center gap-2 py-1 text-sm border-b border-slate-50 dark:border-slate-800"><span class="material-symbols-outlined text-slate-400 !text-base">computer</span>${dv.ip}</div>`).join('')
+          }`)}
+      </div>
+      <div class="mt-6">
+        ${card(`<h3 class="font-bold mb-4 text-base">Network Interfaces (${d.interfaces.length})</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            ${d.interfaces.map(iface=>`
+              <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                <p class="font-bold text-sm mb-2">${iface.name}</p>
+                ${iface.addresses.map(a=>`<p class="text-xs text-slate-500">${a.family}: <span class="font-mono text-slate-700 dark:text-slate-300">${a.address}</span></p>`).join('')}
+              </div>`).join('')}
+          </div>`)}
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<p class="text-red-500">Error: ${e.message}</p>`;
+  }
+}
+
+// ── File Integrity ────────────────────────────────────────────────────────────
+async function loadFIM() {
+  const el = document.getElementById('fimContent');
+  el.innerHTML = '<p class="text-slate-400">Loading…</p>';
+  try {
+    const [status, integrity] = await Promise.all([
+      fetch(`${API}/api/fim/status`).then(r=>r.json()),
+      fetch(`${API}/api/fim/check`).then(r=>r.json()),
+    ]);
+    const statusColor = integrity.modified.length > 0 ? 'text-red-500' : integrity.missing.length > 0 ? 'text-amber-500' : 'text-emerald-500';
+    el.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 text-center">
+          <p class="text-xs text-slate-500 font-bold uppercase mb-2">Monitored</p>
+          <p class="text-3xl font-black">${integrity.total_monitored}</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 text-center">
+          <p class="text-xs text-slate-500 font-bold uppercase mb-2">OK</p>
+          <p class="text-3xl font-black text-emerald-500">${integrity.ok.length}</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 text-center">
+          <p class="text-xs text-slate-500 font-bold uppercase mb-2">Modified / Missing</p>
+          <p class="text-3xl font-black ${statusColor}">${integrity.modified.length + integrity.missing.length}</p>
+        </div>
+      </div>
+      ${card(`<h3 class="font-bold mb-4">Monitored Paths</h3>
+        ${status.monitored_paths.length === 0
+          ? '<p class="text-slate-400 text-sm">No paths monitored yet.</p>'
+          : status.monitored_paths.map(p=>`
+              <div class="flex items-center gap-2 py-2 text-sm border-b border-slate-50 dark:border-slate-800">
+                <span class="material-symbols-outlined !text-base ${integrity.ok.includes(p)?'text-emerald-500':integrity.missing.includes(p)?'text-slate-400':'text-red-500'}">
+                  ${integrity.ok.includes(p)?'check_circle':integrity.missing.includes(p)?'help':'error'}
+                </span>
+                <span class="font-mono text-xs">${p}</span>
+              </div>`).join('')}
+      `)}
+      ${integrity.modified.length > 0 ? card(`<h3 class="font-bold mb-4 text-red-600">⚠ Modified Files</h3>
+        ${integrity.modified.map(m=>`
+          <div class="p-3 mb-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <p class="font-bold text-sm text-red-700">${m.path}</p>
+            <p class="text-xs text-slate-500 mt-1">Expected: <span class="font-mono">${m.expected?.slice(0,16)}…</span></p>
+            <p class="text-xs text-slate-500">Actual:   <span class="font-mono">${m.actual?.slice(0,16)}…</span></p>
+            <p class="text-xs text-slate-400 mt-1">Detected: ${new Date(m.detected_at).toLocaleString()}</p>
+          </div>`).join('')}`) : ''}
+    `;
+  } catch(e) {
+    el.innerHTML = `<p class="text-red-500">Error: ${e.message}</p>`;
+  }
+}
+
+// ── Logs ──────────────────────────────────────────────────────────────────────
+async function loadLogs() {
+  const el = document.getElementById('logsContent');
+  el.innerHTML = '<p class="text-slate-400">Loading…</p>';
+  try {
+    const r = await fetch(`${API}/api/logs`);
+    const d = await r.json();
+    el.innerHTML = `
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        ${[['Failed Logins',d.failed_logins,'text-red-500'],
+           ['Success Logins',d.success_logins,'text-emerald-500'],
+           ['Sudo Events',d.sudo_events,'text-amber-500'],
+           ['Syslog Errors',d.syslog_errors,'text-orange-500']
+          ].map(([l,v,c])=>`<div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 text-center">
+            <p class="text-xs text-slate-500 font-bold uppercase mb-2">${l}</p>
+            <p class="text-3xl font-black ${c}">${v}</p>
+          </div>`).join('')}
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        ${card(`<h3 class="font-bold mb-3">Log Files</h3>
+          ${kv('Auth Log', d.auth_log||'Not found')}
+          ${kv('Syslog', d.syslog||'Not found')}
+          ${kv('SSH Events', d.ssh_events)}
+          ${kv('Syslog Warnings', d.syslog_warnings)}`)}
+        ${d.suspicious_ips.length > 0 ? card(`<h3 class="font-bold mb-3 text-red-600">Suspicious IPs (≥5 failures)</h3>
+          ${d.suspicious_ips.map(ip=>`<div class="flex justify-between py-1.5 border-b border-slate-50 dark:border-slate-800 text-sm">
+            <span class="font-mono text-red-600">${ip.ip}</span>
+            <span class="font-bold">${ip.count} attempts</span>
+          </div>`).join('')}`) :
+          card(`<h3 class="font-bold mb-3 text-emerald-600">No Suspicious IPs</h3><p class="text-sm text-slate-500">No IPs with 5+ failed login attempts detected.</p>`)}
+        ${d.recent_failed.length > 0 ? card(`<h3 class="font-bold mb-3">Recent Failed Logins</h3>
+          <div class="space-y-1">
+            ${d.recent_failed.slice(0,5).map(l=>`<p class="text-xs font-mono bg-slate-50 dark:bg-slate-800 p-2 rounded text-slate-600 dark:text-slate-400 truncate">${l}</p>`).join('')}
+          </div>`) : ''}
+        ${d.recent_errors.length > 0 ? card(`<h3 class="font-bold mb-3">Recent Syslog Errors</h3>
+          <div class="space-y-1">
+            ${d.recent_errors.slice(0,5).map(l=>`<p class="text-xs font-mono bg-slate-50 dark:bg-slate-800 p-2 rounded text-slate-600 dark:text-slate-400 truncate">${l}</p>`).join('')}
+          </div>`) : ''}
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<p class="text-red-500">Error: ${e.message}</p>`;
+  }
+}
+
+// ── Password ──────────────────────────────────────────────────────────────────
+async function analyzePwd() {
+  const pwd = document.getElementById('pwdDash').value;
+  if (!pwd) return;
+  try {
+    const r = await fetch(`${API}/api/password/${encodeURIComponent(pwd)}`);
+    const d = await r.json();
+    document.getElementById('pwdDashResult').classList.remove('hidden');
+
+    const colors = {'Very Weak':'text-red-500','Weak':'text-orange-500','Fair':'text-yellow-600','Strong':'text-emerald-600','Very Strong':'text-blue-600'};
+    const barColors = {'Very Weak':'bg-red-500','Weak':'bg-orange-500','Fair':'bg-yellow-500','Strong':'bg-emerald-500','Very Strong':'bg-blue-500'};
+    document.getElementById('pwdDashStrength').textContent = `${d.strength} (${d.score}/100)`;
+    document.getElementById('pwdDashStrength').className = `font-bold ${colors[d.strength]||'text-slate-600'}`;
+    document.getElementById('pwdDashBar').style.width = d.score + '%';
+    document.getElementById('pwdDashBar').className = `h-2 rounded-full transition-all duration-500 ${barColors[d.strength]||'bg-slate-400'}`;
+
+    const checks = d.checks;
+    document.getElementById('pwdDashChecks').innerHTML = [
+      ['Lowercase', checks.has_lowercase],['Uppercase', checks.has_uppercase],
+      ['Numbers',   checks.has_digit],    ['Special',   checks.has_special],
+      ['Length ≥12',checks.length_ok],    ['Not Common',checks.not_common],
+    ].map(([l,v])=>`<div class="flex flex-col items-center p-2 rounded ${v?'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600':'bg-red-50 dark:bg-red-900/20 text-red-500'}">
+      <span class="material-symbols-outlined text-sm mb-0.5">${v?'check':'close'}</span>
+      <span class="text-[10px] font-bold uppercase">${l}</span>
+    </div>`).join('');
+
+    document.getElementById('pwdDashMeta').innerHTML = `
+      <p>Length: <strong>${d.password_length}</strong> characters</p>
+      <p>Entropy: <strong>${d.entropy}</strong> bits/char</p>
+      <p>Estimated crack time: <strong>${d.crack_time}</strong> (10B guesses/sec)</p>`;
+
+    document.getElementById('pwdDashSuggestions').innerHTML = d.suggestions.length
+      ? '<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Suggestions</p>' +
+        d.suggestions.map(s=>`<div class="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400"><span class="material-symbols-outlined text-amber-500 !text-base mt-0.5">lightbulb</span>${s}</div>`).join('')
+      : '<p class="text-sm text-emerald-600 font-semibold">✅ Great password! No improvements needed.</p>';
+  } catch(e) {
+    alert('API error: ' + e.message);
+  }
+}
+
+function toggleDashPwd() {
+  const inp = document.getElementById('pwdDash');
+  const eye = document.getElementById('dashEye');
+  if (inp.type==='password'){inp.type='text';eye.textContent='visibility_off';}
+  else{inp.type='password';eye.textContent='visibility';}
+}
+
+// ── Refresh All ───────────────────────────────────────────────────────────────
+async function loadAll() {
+  const icon = document.getElementById('refreshIcon');
+  icon.classList.add('spin');
+  await loadDashboard();
+  if (currentSection === 'network')  await loadNetwork();
+  if (currentSection === 'fim')      await loadFIM();
+  if (currentSection === 'logs')     await loadLogs();
+  icon.classList.remove('spin');
+}
+
+// ── Hash-based navigation ─────────────────────────────────────────────────────
+function routeHash() {
+  const hash = location.hash.replace('#','');
+  if (['network','fim','logs','password'].includes(hash)) showSection(hash);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadDashboard();
+routeHash();
+window.addEventListener('hashchange', routeHash);
+// Auto-refresh every 60s
+setInterval(loadDashboard, 60000);
+</script>
+</body>
+</html>
