@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: { primary: "#0b7dda", "bg-light": "#f5f7f8", "bg-dark": "#101a22" },
+        fontFamily: { display: ["Inter", "sans-serif"] },
+        borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+      },
+    },
+  };
+</script>
+<title>Cybersecurity Best Practices Toolkit</title>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .fade-in { animation: fadeIn .5s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
+</style>
+</head>
+<body class="bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100">
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<header class="sticky top-0 z-50 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 md:px-10 lg:px-16 py-3">
+  <div class="flex items-center gap-8">
+    <div class="flex items-center gap-3 text-primary">
+      <div class="size-8 flex items-center justify-center bg-primary rounded-lg text-white">
+        <span class="material-symbols-outlined">shield</span>
+      </div>
+      <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold tracking-tight">Guardian Desk</h2>
+    </div>
+    <nav class="hidden lg:flex items-center gap-8">
+      <a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Solutions</a>
+      <a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Resources</a>
+      <a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Products</a>
+      <a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Support</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="hidden md:flex items-stretch rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 h-10">
+      <div class="flex items-center pl-3 text-slate-500"><span class="material-symbols-outlined text-xl">search</span></div>
+      <input class="bg-transparent border-none focus:ring-0 text-sm px-3 placeholder:text-slate-500 w-48" placeholder="Search resources"/>
+    </div>
+    <a href="/dashboard" class="flex items-center justify-center rounded-lg h-10 px-5 bg-primary text-white text-sm font-bold hover:bg-blue-600 transition-all">
+      Go to Dashboard
+    </a>
+  </div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────────────────────────── -->
+<main>
+<div class="max-w-[1200px] mx-auto px-6 md:px-10 py-10">
+
+  <!-- Hero -->
+  <section class="flex flex-col lg:flex-row gap-12 items-center py-10">
+    <div class="w-full lg:w-1/2 flex flex-col gap-6">
+      <span class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary w-fit">2025 Security Standard</span>
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+        Cybersecurity Best Practices Toolkit
+      </h1>
+      <p class="text-slate-600 dark:text-slate-400 text-lg leading-relaxed max-w-[560px]">
+        Equip your organization with industry-leading strategies to preemptively identify vulnerabilities and neutralize threats before they impact your business.
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="/dashboard" class="flex items-center justify-center gap-2 rounded-lg h-12 px-6 bg-primary text-white font-bold hover:shadow-lg hover:shadow-primary/25 transition-all">
+          <span class="material-symbols-outlined text-lg">rocket_launch</span> Get Started Now
+        </a>
+        <a href="/audit" class="flex items-center justify-center gap-2 rounded-lg h-12 px-6 border-2 border-primary/20 text-primary font-bold hover:bg-primary/5 transition-all">
+          View Audit Report
+        </a>
+      </div>
+      <!-- Live risk badge -->
+      <div id="hero-risk" class="flex items-center gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-fit">
+        <span class="material-symbols-outlined text-slate-400 animate-spin">sync</span>
+        <span class="text-sm text-slate-500">Loading live risk score…</span>
+      </div>
+    </div>
+    <div class="w-full lg:w-1/2">
+      <div class="relative rounded-xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+        <img alt="Cybersecurity Dashboard" class="w-full aspect-video object-cover"
+             src="https://lh3.googleusercontent.com/aida-public/AB6AXuATMuKU_JXkade4C_ik2S5AzDoDIGHW8rIgYWq6naB2Z12DGxm_c3ElzxQITiTseNxuZQHpHNsnuqqU6KT1V5shvbfyaLYvSL03ihGw7mNbPEVXW7uN1SRn7jPvAmwkcLPAOsnjWcEG-5w0Kta08KvcbKDnUVT_lYX0oP_x_c_ZuRpmTqPDW_Thu5QLt2urEdYsPyZTgUA-B4KQR1qBWcAMx_3rPuPXdMxGB0hb2NLuHpToXJMf3Y0eBeDoAYjChlwWz8JzDw0lvYqe"/>
+        <div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent pointer-events-none"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 Core Features -->
+  <section class="py-16">
+    <div class="flex flex-col gap-3 mb-12">
+      <h2 class="text-3xl font-bold tracking-tight">6 Core Toolkit Features</h2>
+      <div class="h-1 w-20 bg-primary rounded-full"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Feature cards -->
+      <a href="/audit" class="feature-card flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 hover:shadow-lg hover:border-primary/30 transition-all group">
+        <div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined">shield_lock</span>
+        </div>
+        <h3 class="text-xl font-bold">System Security Audit</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">Live vulnerability scanning for all endpoints — OS info, open ports, running processes and disk health.</p>
+        <span class="text-primary text-sm font-bold flex items-center gap-1 mt-auto">View Audit <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+      </a>
+
+      <a href="/dashboard#fim" class="feature-card flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 hover:shadow-lg hover:border-primary/30 transition-all group">
+        <div class="size-12 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined">find_in_page</span>
+        </div>
+        <h3 class="text-xl font-bold">File Integrity Monitoring</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">Real-time SHA-256 tracking of unauthorized file changes across critical system directories.</p>
+        <span class="text-primary text-sm font-bold flex items-center gap-1 mt-auto">View FIM <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+      </a>
+
+      <a href="/dashboard#network" class="feature-card flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 hover:shadow-lg hover:border-primary/30 transition-all group">
+        <div class="size-12 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined">hub</span>
+        </div>
+        <h3 class="text-xl font-bold">Network Monitoring</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">Live traffic analysis — interfaces, connection states, I/O bytes and suspicious remote hosts.</p>
+        <span class="text-primary text-sm font-bold flex items-center gap-1 mt-auto">View Network <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+      </a>
+
+      <div class="feature-card flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 hover:shadow-lg hover:border-primary/30 transition-all group">
+        <div class="size-12 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined">password</span>
+        </div>
+        <h3 class="text-xl font-bold">Password Strength Analysis</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">Entropy scoring, crack-time estimation, and dictionary cross-check — all in real time.</p>
+        <!-- inline password tester -->
+        <div class="mt-auto space-y-2">
+          <div class="relative">
+            <input id="pwdInput" type="password" placeholder="Test a password…"
+                   class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent pr-10"/>
+            <button onclick="togglePwd()" class="absolute right-2 top-1.5 text-slate-400 hover:text-slate-600">
+              <span id="eyeIcon" class="material-symbols-outlined text-lg">visibility</span>
+            </button>
+          </div>
+          <div id="pwdResult" class="text-xs text-slate-400 italic">Enter a password above…</div>
+          <div id="pwdBar" class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 hidden">
+            <div id="pwdBarFill" class="h-1.5 rounded-full transition-all duration-300 bg-slate-400" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <a href="/dashboard#logs" class="feature-card flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 hover:shadow-lg hover:border-primary/30 transition-all group">
+        <div class="size-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined">contract_edit</span>
+        </div>
+        <h3 class="text-xl font-bold">Security Log Monitoring</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">Auth log parsing — failed logins, sudo events, SSH connections and suspicious IPs.</p>
+        <span class="text-primary text-sm font-bold flex items-center gap-1 mt-auto">View Logs <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+      </a>
+
+      <a href="/dashboard" class="feature-card flex flex-col gap-4 rounded-xl border border-primary/30 bg-primary/5 dark:bg-primary/10 p-6 hover:shadow-lg transition-all group">
+        <div class="size-12 rounded-lg bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined">dashboard_customize</span>
+        </div>
+        <h3 class="text-xl font-bold">Central Security Dashboard</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">Unified command center — live risk score, alerts and full infrastructure visibility.</p>
+        <span class="text-primary text-sm font-bold flex items-center gap-1 mt-auto">Open Dashboard <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+      </a>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────────── -->
+<footer class="border-t border-slate-200 dark:border-slate-800 px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-medium">
+  <span>© 2026 Guardian Cybersecurity Toolkit</span>
+  <div class="flex gap-6">
+    <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+    <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+    <a class="hover:text-primary transition-colors" href="#">Support</a>
+  </div>
+</footer>
+
+<script>
+const API = '';  // same origin — Flask serves both
+
+// ── Load live risk score in hero ──────────────────────────────────────────────
+async function loadHeroRisk() {
+  try {
+    const r = await fetch(`${API}/api/dashboard`);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    const score = d.risk_score;
+    const color = score >= 70 ? 'text-red-600' : score >= 40 ? 'text-amber-600' : 'text-emerald-600';
+    const icon  = score >= 70 ? 'dangerous' : score >= 40 ? 'warning' : 'verified_user';
+    const label = score >= 70 ? 'High Risk' : score >= 40 ? 'Medium Risk' : 'Low Risk';
+    document.getElementById('hero-risk').innerHTML = `
+      <span class="material-symbols-outlined ${color}">${icon}</span>
+      <div>
+        <p class="text-sm font-bold ${color}">Risk Score: ${score}/100 — ${label}</p>
+        <p class="text-xs text-slate-500">${d.alerts.length} active alert(s) · ${d.summary.open_ports} open ports · ${d.summary.failed_logins} failed logins</p>
+      </div>`;
+  } catch {
+    document.getElementById('hero-risk').innerHTML =
+      '<span class="material-symbols-outlined text-amber-500">wifi_off</span><span class="text-sm text-slate-500">Backend offline — start app.py to see live data</span>';
+  }
+}
+
+// ── Password tester ───────────────────────────────────────────────────────────
+let pwdTimer = null;
+document.getElementById('pwdInput').addEventListener('input', (e) => {
+  clearTimeout(pwdTimer);
+  const val = e.target.value;
+  if (!val) {
+    document.getElementById('pwdResult').textContent = 'Enter a password above…';
+    document.getElementById('pwdBar').classList.add('hidden');
+    return;
+  }
+  pwdTimer = setTimeout(() => checkPassword(val), 350);
+});
+
+async function checkPassword(pwd) {
+  try {
+    const r = await fetch(`${API}/api/password/${encodeURIComponent(pwd)}`);
+    const d = await r.json();
+    const bar = document.getElementById('pwdBar');
+    const fill = document.getElementById('pwdBarFill');
+    const result = document.getElementById('pwdResult');
+    bar.classList.remove('hidden');
+    fill.style.width = d.score + '%';
+    const colors = { 'Very Weak':'bg-red-500','Weak':'bg-orange-500','Fair':'bg-yellow-500','Strong':'bg-emerald-500','Very Strong':'bg-blue-500' };
+    fill.className = `h-1.5 rounded-full transition-all duration-300 ${colors[d.strength] || 'bg-slate-400'}`;
+    result.innerHTML = `<span class="font-bold">${d.strength}</span> · Score ${d.score}/100 · Crack time: ${d.crack_time}`;
+    result.className = 'text-xs';
+  } catch {
+    document.getElementById('pwdResult').textContent = 'API unavailable';
+  }
+}
+
+function togglePwd() {
+  const inp = document.getElementById('pwdInput');
+  const icon = document.getElementById('eyeIcon');
+  if (inp.type === 'password') { inp.type='text'; icon.textContent='visibility_off'; }
+  else { inp.type='password'; icon.textContent='visibility'; }
+}
+
+loadHeroRisk();
+</script>
+</body>
+</html>

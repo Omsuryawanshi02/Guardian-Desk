@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  tailwind.config = {
+    darkMode:"class",
+    theme:{ extend:{
+      colors:{ primary:"#0b7dda","bg-light":"#f5f7f8","bg-dark":"#101a22" },
+      fontFamily:{ display:["Inter","sans-serif"] },
+    }}
+  };
+</script>
+<title>Guardian Desk — Security Dashboard</title>
+<style>
+  body { font-family:'Inter',sans-serif; }
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .fade-in { animation: fadeIn .4s ease both; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+  /* ── Toast notifications ── */
+  #toastContainer { position:fixed; top:1rem; right:1rem; z-index:9999; display:flex; flex-direction:column; gap:.5rem; pointer-events:none; }
+  .toast { pointer-events:all; display:flex; align-items:flex-start; gap:.75rem; padding:.85rem 1.1rem;
+    border-radius:.75rem; box-shadow:0 8px 30px rgba(0,0,0,.18); min-width:280px; max-width:380px;
+    animation: slideIn .35s ease both; }
+  @keyframes slideIn { from{opacity:0;transform:translateX(60px)} to{opacity:1;transform:none} }
+  .toast.hiding { animation: slideOut .3s ease forwards; }
+  @keyframes slideOut { to{opacity:0;transform:translateX(60px)} }
+  .toast-high   { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+  .toast-medium { background:#fffbeb; border:1px solid #fde68a; color:#92400e; }
+  .toast-low    { background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; }
+  .toast-ok     { background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; }
+
+  /* ── Alert History panel ── */
+  #alertHistoryPanel { position:fixed; right:0; top:0; height:100vh; width:360px; z-index:100;
+    background:white; box-shadow:-4px 0 24px rgba(0,0,0,.12); transform:translateX(100%);
+    transition:transform .3s ease; display:flex; flex-direction:column; }
+  .dark #alertHistoryPanel { background:#0f172a; }
+  #alertHistoryPanel.open { transform:translateX(0); }
+
+  /* ── Auto-refresh indicator ── */
+  #refreshBar { position:fixed; bottom:0; left:0; height:3px; background:#0b7dda;
+    transition:width 1s linear; z-index:50; }
+</style>
+</head>
+<body class="bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100">
+
+<!-- ── Toast Container ───────────────────────────────────────────────────────── -->
+<div id="toastContainer"></div>
+
+<!-- ── Auto-refresh bar ──────────────────────────────────────────────────────── -->
+<div id="refreshBar" style="width:0%"></div>
+
+<!-- ── Alert History Side Panel ──────────────────────────────────────────────── -->
+<div id="alertHistoryPanel">
+  <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
+    <h3 class="font-bold text-base flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary">history</span> Alert History
+    </h3>
+    <button onclick="toggleHistory()" class="text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+  <div id="historyList" class="flex-1 overflow-y-auto p-4 space-y-2">
+    <p class="text-slate-400 text-sm">No alerts recorded yet.</p>
+  </div>
+  <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+    <button onclick="clearHistory()" class="w-full text-xs px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 transition-all">
+      Clear History
+    </button>
+  </div>
+</div>
+
+<div class="flex min-h-screen flex-col">
+
+<!-- ── Top Nav ─────────────────────────────────────────────────────────────── -->
+<header class="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 lg:px-10">
+  <div class="flex items-center gap-8">
+    <div class="flex items-center gap-3">
+      <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
+        <span class="material-symbols-outlined !text-xl">shield_with_heart</span>
+      </div>
+      <h2 class="text-xl font-extrabold tracking-tight">Guardian Desk</h2>
+    </div>
+    <nav class="hidden md:flex items-center gap-6">
+      <a class="text-sm font-bold text-primary" href="/dashboard">Dashboard</a>
+      <a class="text-sm font-medium text-slate-500 hover:text-primary transition-colors" href="/audit">Audit</a>
+      <a class="text-sm font-medium text-slate-500 hover:text-primary transition-colors" href="/">Home</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-3">
+    <!-- Auto-refresh toggle -->
+    <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
+      <span>Auto</span>
+      <button id="autoToggle" onclick="toggleAutoRefresh()"
+        class="relative w-9 h-5 rounded-full bg-primary transition-colors focus:outline-none">
+        <span id="autoThumb" class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform translate-x-4"></span>
+      </button>
+      <span id="autoLabel" class="text-primary">ON</span>
+    </div>
+    <!-- Alert history button -->
+    <button onclick="toggleHistory()" title="Alert History"
+      class="relative flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-primary/10 hover:text-primary transition-colors">
+      <span class="material-symbols-outlined !text-xl">notifications</span>
+      <span id="historyBadge" class="hidden absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">0</span>
+    </button>
+    <!-- Export PDF -->
+    <button onclick="exportPDF()" title="Export PDF Report"
+      class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-primary/10 hover:text-primary transition-colors">
+      <span class="material-symbols-outlined !text-xl">picture_as_pdf</span>
+    </button>
+    <!-- Refresh -->
+    <button onclick="loadAll()" title="Refresh all data"
+      class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-primary/10 hover:text-primary transition-colors">
+      <span id="refreshIcon" class="material-symbols-outlined !text-xl">refresh</span>
+    </button>
+    <div id="statusDot" class="flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-500">
+      <span class="h-2 w-2 rounded-full bg-slate-400 inline-block"></span> Connecting…
+    </div>
+  </div>
+</header>
+
+<div class="flex flex-1">
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
+<aside class="hidden w-60 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 lg:flex gap-1">
+  <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-3 mb-2">Modules</p>
+  <a onclick="showSection('overview')" id="nav-overview" class="sidebar-link active flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer text-sm font-semibold">
+    <span class="material-symbols-outlined !text-xl">grid_view</span> Overview
+  </a>
+  <a onclick="showSection('network')" id="nav-network" class="sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+    <span class="material-symbols-outlined !text-xl">hub</span> Network
+  </a>
+  <a onclick="showSection('fim')" id="nav-fim" class="sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+    <span class="material-symbols-outlined !text-xl">find_in_page</span> File Integrity
+  </a>
+  <a onclick="showSection('logs')" id="nav-logs" class="sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+    <span class="material-symbols-outlined !text-xl">contract_edit</span> Logs
+  </a>
+  <a onclick="showSection('password')" id="nav-password" class="sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+    <span class="material-symbols-outlined !text-xl">key</span> Password
+  </a>
+  <a onclick="showSection('history')" id="nav-history" class="sidebar-link flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+    <span class="material-symbols-outlined !text-xl">history</span> Alert History
+  </a>
+  <div class="mt-auto border-t border-slate-100 dark:border-slate-800 pt-4">
+    <a href="/audit" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary transition-colors">
+      <span class="material-symbols-outlined !text-xl">fact_check</span> Full Audit →
+    </a>
+  </div>
+</aside>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<main class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-8">
+
+  <!-- ── OVERVIEW ─────────────────────────────────────────────────────────── -->
+  <section id="section-overview" class="fade-in space-y-8">
+    <div class="relative overflow-hidden rounded-2xl bg-slate-900 p-8">
+      <div class="absolute inset-0 bg-gradient-to-br from-primary/30 via-slate-900 to-slate-900 opacity-80"></div>
+      <div class="relative z-10 flex flex-wrap items-center justify-between gap-6">
+        <div>
+          <p class="text-slate-400 text-sm font-semibold mb-1">Live Risk Score</p>
+          <div class="flex items-baseline gap-3">
+            <h1 id="riskScore" class="text-6xl font-black text-white">—</h1>
+            <span class="text-slate-400 text-2xl">/100</span>
+          </div>
+          <p id="riskLabel" class="text-slate-300 font-semibold mt-1">Loading…</p>
+          <p id="lastRefresh" class="text-slate-500 text-xs mt-1"></p>
+        </div>
+        <div id="alertsList" class="flex flex-col gap-2 min-w-60 max-w-sm">
+          <div class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Active Alerts</div>
+          <p class="text-slate-400 text-sm">Loading alerts…</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Processes</p>
+        <p id="statProcesses" class="text-2xl font-black">—</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Open Ports</p>
+        <p id="statPorts" class="text-2xl font-black">—</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Net Devices</p>
+        <p id="statDevices" class="text-2xl font-black">—</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Failed Logins</p>
+        <p id="statLogins" class="text-2xl font-black text-red-500">—</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">FIM Monitored</p>
+        <p id="statFimMonitored" class="text-2xl font-black">—</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-center">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">FIM Modified</p>
+        <p id="statFimModified" class="text-2xl font-black text-amber-500">—</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div onclick="showSection('network')" class="group cursor-pointer flex flex-col gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 hover:shadow-md hover:border-primary/30 transition-all">
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined !text-3xl">hub</span>
+        </div>
+        <h3 class="text-lg font-bold">Network Monitor</h3>
+        <p class="text-sm text-slate-500">Live interface stats, connection states and remote IPs.</p>
+        <span class="text-primary text-sm font-bold flex items-center gap-1 mt-auto">View Traffic <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+      </div>
+      <div onclick="showSection('fim')" class="group cursor-pointer flex flex-col gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 hover:shadow-md hover:border-primary/30 transition-all">
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined !text-3xl">find_in_page</span>
+        </div>
+        <h3 class="text-lg font-bold">File Integrity</h3>
+        <p class="text-sm text-slate-500">SHA-256 hash checking on monitored system files.</p>
+        <span class="text-primary text-sm font-bold flex items-center gap-1 mt-auto">Check Files <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+      </div>
+      <div onclick="showSection('logs')" class="group cursor-pointer flex flex-col gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 hover:shadow-md hover:border-primary/30 transition-all">
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined !text-3xl">content_copy</span>
+        </div>
+        <h3 class="text-lg font-bold">Log Monitor</h3>
+        <p class="text-sm text-slate-500">Auth events, failed logins, sudo usage and syslog errors.</p>
+        <span class="text-primary text-sm font-bold flex items-center gap-1 mt-auto">View Logs <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── NETWORK ───────────────────────────────────────────────────────────── -->
+  <section id="section-network" class="hidden fade-in space-y-6">
+    <h2 class="text-2xl font-bold">Network Monitor</h2>
+    <div id="networkContent" class="text-slate-500">Loading network data…</div>
+  </section>
+
+  <!-- ── FILE INTEGRITY ────────────────────────────────────────────────────── -->
+  <section id="section-fim" class="hidden fade-in space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <h2 class="text-2xl font-bold">File Integrity Monitor</h2>
+      <div class="flex items-center gap-2">
+        <input id="fimAddInput" type="text" placeholder="C:\path\to\file or folder"
+          class="text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 w-72 focus:outline-none focus:ring-2 focus:ring-primary"/>
+        <button onclick="fimAddPath()"
+          class="flex items-center gap-1 px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold hover:bg-blue-600 transition-all">
+          <span class="material-symbols-outlined text-base">add</span> Monitor
+        </button>
+        <button onclick="loadFIM()"
+          class="flex items-center gap-1 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 text-sm font-bold hover:bg-primary/10 hover:text-primary transition-all">
+          <span class="material-symbols-outlined text-base">refresh</span>
+        </button>
+      </div>
+    </div>
+    <div id="fimContent" class="text-slate-500">Loading FIM data…</div>
+  </section>
+
+  <!-- ── LOGS ──────────────────────────────────────────────────────────────── -->
+  <section id="section-logs" class="hidden fade-in space-y-6">
+    <h2 class="text-2xl font-bold">Security Log Monitor</h2>
+    <div id="logsContent" class="text-slate-500">Loading log data…</div>
+  </section>
+
+  <!-- ── PASSWORD ──────────────────────────────────────────────────────────── -->
+  <section id="section-password" class="hidden fade-in space-y-6">
+    <h2 class="text-2xl font-bold">Password Strength Analyzer</h2>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 max-w-xl">
+      <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Test a Password</label>
+      <div class="relative mb-4">
+        <input id="pwdDash" type="password" placeholder="Enter password to analyze…"
+               class="w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 px-4 py-3 text-base focus:ring-2 focus:ring-primary focus:border-transparent pr-12"/>
+        <button onclick="toggleDashPwd()" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
+          <span id="dashEye" class="material-symbols-outlined">visibility</span>
+        </button>
+      </div>
+      <button onclick="analyzePwd()" class="w-full rounded-lg bg-primary text-white font-bold py-3 hover:bg-blue-600 transition-colors">Analyze Password</button>
+      <div id="pwdDashResult" class="mt-6 hidden space-y-4">
+        <div class="flex justify-between text-sm mb-1">
+          <span class="text-slate-600">Strength Score</span>
+          <span id="pwdDashStrength" class="font-bold text-emerald-600">—</span>
+        </div>
+        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+          <div id="pwdDashBar" class="h-2 rounded-full transition-all duration-500 bg-slate-400" style="width:0%"></div>
+        </div>
+        <div id="pwdDashChecks" class="grid grid-cols-3 gap-2"></div>
+        <div id="pwdDashMeta" class="text-sm text-slate-500 space-y-1"></div>
+        <div id="pwdDashSuggestions" class="space-y-1"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ALERT HISTORY ─────────────────────────────────────────────────────── -->
+  <section id="section-history" class="hidden fade-in space-y-6">
+    <div class="flex items-center justify-between">
+      <h2 class="text-2xl font-bold">Alert History</h2>
+      <button onclick="clearHistory()" class="text-xs px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 transition-all">
+        Clear All
+      </button>
+    </div>
+    <div id="historyPageList" class="space-y-2">
+      <p class="text-slate-400 text-sm">No alerts recorded yet.</p>
+    </div>
+  </section>
+
+</main>
+</div>
+</div>
+
+<script>
+const API = '';
+let currentSection = 'overview';
+let autoRefresh    = true;
+let autoTimer      = null;
+let refreshProgress = 0;
+let progressTimer   = null;
+const REFRESH_INTERVAL = 30000; // 30 seconds
+
+// ── Alert History store ───────────────────────────────────────────────────────
+let alertHistory = JSON.parse(localStorage.getItem('gd_alert_history') || '[]');
+let prevAlerts   = [];
+
+function saveHistory() {
+  localStorage.setItem('gd_alert_history', JSON.stringify(alertHistory.slice(-100)));
+}
+
+function addToHistory(alerts, riskScore) {
+  const now = new Date().toISOString();
+  alerts.forEach(a => {
+    // Only add if it's a new alert not seen before
+    const key = a.level + '|' + a.msg;
+    const prevKeys = prevAlerts.map(p => p.level + '|' + p.msg);
+    if (!prevKeys.includes(key)) {
+      alertHistory.unshift({ ...a, timestamp: now, risk: riskScore });
+      showToast(a.msg, a.level);
+    }
+  });
+  prevAlerts = [...alerts];
+  saveHistory();
+  renderHistory();
+  updateHistoryBadge();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const page = document.getElementById('historyPageList');
+  if (!alertHistory.length) {
+    const empty = '<p class="text-slate-400 text-sm">No alerts recorded yet.</p>';
+    if (list) list.innerHTML = empty;
+    if (page) page.innerHTML = empty;
+    return;
+  }
+  const html = alertHistory.map(a => `
+    <div class="flex items-start gap-3 p-3 rounded-lg border ${
+      a.level==='high'   ? 'border-red-100 bg-red-50 dark:bg-red-900/10' :
+      a.level==='medium' ? 'border-amber-100 bg-amber-50 dark:bg-amber-900/10' :
+                           'border-blue-100 bg-blue-50 dark:bg-blue-900/10'}">
+      <span class="material-symbols-outlined text-sm mt-0.5 ${
+        a.level==='high'?'text-red-500':a.level==='medium'?'text-amber-500':'text-blue-500'}">
+        ${a.level==='high'?'error':a.level==='medium'?'warning':'info'}
+      </span>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">${a.msg}</p>
+        <p class="text-xs text-slate-400 mt-0.5">${new Date(a.timestamp).toLocaleString()} · Risk: ${a.risk}/100</p>
+      </div>
+      ${badge(a.level)}
+    </div>`).join('');
+  if (list) list.innerHTML = html;
+  if (page) page.innerHTML = html;
+}
+
+function updateHistoryBadge() {
+  const badge = document.getElementById('historyBadge');
+  if (alertHistory.length > 0) {
+    badge.textContent = alertHistory.length > 99 ? '99+' : alertHistory.length;
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function clearHistory() {
+  alertHistory = [];
+  saveHistory();
+  renderHistory();
+  updateHistoryBadge();
+}
+
+function toggleHistory() {
+  document.getElementById('alertHistoryPanel').classList.toggle('open');
+}
+
+// ── Toast Notifications ───────────────────────────────────────────────────────
+function showToast(msg, level='high') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${level}`;
+  const icons = { high:'error', medium:'warning', low:'info', ok:'check_circle' };
+  toast.innerHTML = `
+    <span class="material-symbols-outlined text-xl shrink-0">${icons[level]||'info'}</span>
+    <div class="flex-1">
+      <p class="font-bold text-sm uppercase tracking-wide">${level} Alert</p>
+      <p class="text-sm mt-0.5">${msg}</p>
+    </div>
+    <button onclick="this.parentElement.remove()" class="shrink-0 opacity-50 hover:opacity-100">
+      <span class="material-symbols-outlined text-sm">close</span>
+    </button>`;
+  container.appendChild(toast);
+  // Auto-remove after 6 seconds
+  setTimeout(() => {
+    toast.classList.add('hiding');
+    setTimeout(() => toast.remove(), 300);
+  }, 6000);
+}
+
+// ── Auto-refresh logic ────────────────────────────────────────────────────────
+function toggleAutoRefresh() {
+  autoRefresh = !autoRefresh;
+  const thumb = document.getElementById('autoThumb');
+  const label = document.getElementById('autoLabel');
+  const btn   = document.getElementById('autoToggle');
+  if (autoRefresh) {
+    thumb.style.transform = 'translateX(16px)';
+    btn.classList.add('bg-primary');
+    btn.classList.remove('bg-slate-300');
+    label.textContent = 'ON';
+    label.className   = 'text-primary text-xs font-semibold';
+    startAutoRefresh();
+  } else {
+    thumb.style.transform = 'translateX(0)';
+    btn.classList.remove('bg-primary');
+    btn.classList.add('bg-slate-300');
+    label.textContent = 'OFF';
+    label.className   = 'text-slate-400 text-xs font-semibold';
+    stopAutoRefresh();
+  }
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+  refreshProgress = 0;
+  startProgressBar();
+  autoTimer = setInterval(async () => {
+    await loadDashboard();
+    if (currentSection === 'network') loadNetwork();
+    if (currentSection === 'fim')     loadFIM();
+    if (currentSection === 'logs')    loadLogs();
+    refreshProgress = 0;
+    startProgressBar();
+  }, REFRESH_INTERVAL);
+}
+
+function stopAutoRefresh() {
+  if (autoTimer)    { clearInterval(autoTimer);    autoTimer = null; }
+  if (progressTimer){ clearInterval(progressTimer); progressTimer = null; }
+  document.getElementById('refreshBar').style.width = '0%';
+}
+
+function startProgressBar() {
+  if (progressTimer) clearInterval(progressTimer);
+  const bar = document.getElementById('refreshBar');
+  let elapsed = 0;
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  progressTimer = setInterval(() => {
+    elapsed += 1000;
+    const pct = Math.min((elapsed / REFRESH_INTERVAL) * 100, 100);
+    bar.style.transition = 'width 1s linear';
+    bar.style.width = pct + '%';
+    if (elapsed >= REFRESH_INTERVAL) clearInterval(progressTimer);
+  }, 1000);
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showSection(name) {
+  document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
+  document.getElementById('section-' + name).classList.remove('hidden');
+  document.querySelectorAll('.sidebar-link').forEach(l => {
+    l.classList.remove('active','bg-primary/10','text-primary','font-semibold');
+    l.classList.add('text-slate-500');
+  });
+  const nav = document.getElementById('nav-' + name);
+  if (nav) {
+    nav.classList.remove('text-slate-500');
+    nav.classList.add('bg-primary/10','text-primary','font-semibold');
+  }
+  currentSection = name;
+  if (name === 'network') loadNetwork();
+  if (name === 'fim')     loadFIM();
+  if (name === 'logs')    loadLogs();
+  if (name === 'history') renderHistory();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function badge(level) {
+  const map = { high:'bg-red-100 text-red-700', medium:'bg-amber-100 text-amber-700', low:'bg-blue-100 text-blue-700' };
+  return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${map[level]||'bg-slate-100 text-slate-600'}">${level}</span>`;
+}
+function card(content) {
+  return `<div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">${content}</div>`;
+}
+function kv(label, val) {
+  return `<div class="flex justify-between py-1.5 border-b border-slate-50 dark:border-slate-800 text-sm"><span class="text-slate-500 font-medium">${label}</span><span class="font-bold">${val}</span></div>`;
+}
+function formatBytes(b) {
+  if (!b) return '0 B';
+  const units = ['B','KB','MB','GB'];
+  let i = 0;
+  while (b >= 1024 && i < units.length-1) { b/=1024; i++; }
+  return b.toFixed(1)+' '+units[i];
+}
+function esc(p) { return String(p).split('\\').join('\\\\'); }
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+let _lastDashData = null;
+
+async function loadDashboard() {
+  try {
+    const r = await fetch(`${API}/api/dashboard`);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    _lastDashData = d;
+
+    document.getElementById('riskScore').textContent = d.risk_score;
+    const color = d.risk_score >= 70 ? 'text-red-400' : d.risk_score >= 40 ? 'text-amber-400' : 'text-emerald-400';
+    document.getElementById('riskScore').className = `text-6xl font-black ${color}`;
+    document.getElementById('riskLabel').textContent =
+      d.risk_score >= 70 ? '⚠ High Risk — Immediate attention required' :
+      d.risk_score >= 40 ? '⚡ Medium Risk — Review alerts below' : '✅ Low Risk — System looks healthy';
+    document.getElementById('lastRefresh').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+
+    const al = document.getElementById('alertsList');
+    if (!d.alerts.length) {
+      al.innerHTML = '<div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Active Alerts</div><p class="text-emerald-400 text-sm font-semibold">✅ No active alerts</p>';
+    } else {
+      al.innerHTML = '<div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Active Alerts</div>' +
+        d.alerts.map(a=>`<div class="flex items-center gap-2 text-sm text-white">${badge(a.level)} <span>${a.msg}</span></div>`).join('');
+    }
+
+    const s = d.summary;
+    document.getElementById('statProcesses').textContent    = s.processes;
+    document.getElementById('statPorts').textContent        = s.open_ports;
+    document.getElementById('statDevices').textContent      = s.network_devices;
+    document.getElementById('statLogins').textContent       = s.failed_logins;
+    document.getElementById('statFimMonitored').textContent = s.fim_monitored;
+    document.getElementById('statFimModified').textContent  = s.fim_modified;
+
+    // Fire toast + history for new alerts
+    addToHistory(d.alerts, d.risk_score);
+
+    // FIM tamper alert
+    if (s.fim_modified > 0) {
+      showToast(`${s.fim_modified} file(s) tampered — check File Integrity!`, 'high');
+    }
+
+    setStatus(true);
+  } catch {
+    setStatus(false);
+    document.getElementById('riskLabel').textContent = 'Backend offline — run app.py to see live data';
+  }
+}
+
+function setStatus(online) {
+  const dot = document.getElementById('statusDot');
+  dot.innerHTML = online
+    ? '<span class="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span> <span class="text-emerald-600">Online</span>'
+    : '<span class="h-2 w-2 rounded-full bg-red-500 inline-block"></span> <span class="text-red-500">Offline</span>';
+}
+
+// ── Network ───────────────────────────────────────────────────────────────────
+async function loadNetwork() {
+  const el = document.getElementById('networkContent');
+  el.innerHTML = '<p class="text-slate-400">Loading…</p>';
+  try {
+    const r = await fetch(`${API}/api/network`);
+    const d = await r.json();
+    const io = d.io_stats;
+    el.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        ${card(`<h3 class="font-bold mb-4">Host Info</h3>
+          ${kv('Hostname', d.hostname)}
+          ${kv('Local IP', d.local_ip)}
+          ${kv('Scanned', new Date(d.scanned_at).toLocaleTimeString())}`)}
+        ${card(`<h3 class="font-bold mb-4">I/O Statistics</h3>
+          ${kv('Bytes Sent',   formatBytes(io.bytes_sent))}
+          ${kv('Bytes Recv',   formatBytes(io.bytes_recv))}
+          ${kv('Packets Sent', io.packets_sent.toLocaleString())}
+          ${kv('Packets Recv', io.packets_recv.toLocaleString())}
+          ${kv('Errors In/Out', io.errin+' / '+io.errout)}`)}
+        ${card(`<h3 class="font-bold mb-4">Connection States</h3>
+          ${Object.entries(d.connections_summary).map(([k,v])=>kv(k.charAt(0).toUpperCase()+k.slice(1).replace('_',' '),v)).join('')}`)}
+        ${card(`<h3 class="font-bold mb-4">Remote IPs (${d.devices.length})</h3>
+          ${d.devices.length===0 ? '<p class="text-slate-400 text-sm">No remote connections.</p>'
+            : d.devices.slice(0,20).map(dv=>`<div class="flex items-center gap-2 py-1 text-sm border-b border-slate-50 dark:border-slate-800">
+                <span class="material-symbols-outlined text-slate-400 !text-base">computer</span>${dv.ip}</div>`).join('')}`)}
+      </div>`;
+  } catch(e) { el.innerHTML = `<p class="text-red-500">Error: ${e.message}</p>`; }
+}
+
+// ── File Integrity ────────────────────────────────────────────────────────────
+async function loadFIM() {
+  const el = document.getElementById('fimContent');
+  el.innerHTML = '<p class="text-slate-400">Loading…</p>';
+  try {
+    const [status, integrity] = await Promise.all([
+      fetch(`${API}/api/fim/status`).then(r=>r.json()),
+      fetch(`${API}/api/fim/check`).then(r=>r.json()),
+    ]);
+
+    const modCount = (integrity.modified||[]).length;
+    const misCount = (integrity.missing||[]).length;
+    const okCount  = (integrity.ok||[]).length;
+    const total    = integrity.total_monitored || 0;
+    const filesInfo = status.files_info || [];
+
+    // Fire tamper toast
+    if (modCount > 0) showToast(`${modCount} file(s) modified — possible tampering!`, 'high');
+
+    el.innerHTML = `
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        ${[['Monitored', total,     'text-primary',     'database'],
+           ['OK',        okCount,   'text-emerald-500', 'check_circle'],
+           ['Modified',  modCount,  modCount>0?'text-red-500':'text-emerald-500','edit'],
+           ['Missing',   misCount,  misCount>0?'text-amber-500':'text-slate-400','help'],
+          ].map(([l,v,c,icon])=>`
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 text-center">
+            <span class="material-symbols-outlined ${c} mb-1">${icon}</span>
+            <p class="text-xs text-slate-500 font-bold uppercase mb-1">${l}</p>
+            <p class="text-3xl font-black ${c}">${v}</p>
+          </div>`).join('')}
+      </div>
+
+      ${modCount > 0 ? `
+      <div class="rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 p-5 mb-6">
+        <h3 class="font-bold text-red-700 mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined">warning</span> ${modCount} Modified File(s) Detected
+        </h3>
+        ${(integrity.modified||[]).map(m=>`
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-3 mb-2 border border-red-100">
+          <p class="font-mono text-sm font-bold text-red-700 mb-2">${m.path}</p>
+          <div class="text-xs space-y-1">
+            <div class="flex gap-2"><span class="text-slate-400 w-20">Baseline:</span><span class="font-mono text-emerald-600 truncate">${(m.expected||'').slice(0,32)}...</span></div>
+            <div class="flex gap-2"><span class="text-slate-400 w-20">Current:</span><span class="font-mono text-red-600 truncate">${(m.actual||'').slice(0,32)}...</span></div>
+            <div class="flex gap-2"><span class="text-slate-400 w-20">Detected:</span><span class="text-slate-500">${m.detected_at||''}</span></div>
+          </div>
+          <button onclick="fimRebaseline('${esc(m.path)}')"
+            class="mt-2 text-xs px-3 py-1 rounded-md bg-emerald-100 text-emerald-700 font-bold hover:bg-emerald-200 transition-all">
+            Accept as New Baseline
+          </button>
+        </div>`).join('')}
+      </div>` : ''}
+
+      ${misCount > 0 ? `
+      <div class="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 p-4 mb-6">
+        <h3 class="font-bold text-amber-700 mb-2 flex items-center gap-2">
+          <span class="material-symbols-outlined">help</span> ${misCount} Missing File(s)
+        </h3>
+        ${(integrity.missing||[]).map(p=>`
+        <div class="flex justify-between items-center py-1.5 border-b border-amber-100 text-sm">
+          <span class="font-mono text-slate-600 dark:text-slate-300">${p}</span>
+          <button onclick="fimRemove('${esc(p)}')"
+            class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-500 hover:text-red-500">Remove</button>
+        </div>`).join('')}
+      </div>` : ''}
+
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+        <h3 class="font-bold mb-4">Monitored Files (${total})</h3>
+        ${total === 0 ? `
+          <div class="text-center py-8 text-slate-400">
+            <span class="material-symbols-outlined text-4xl mb-2 block">folder_open</span>
+            <p class="text-sm">No files monitored yet. Enter a path above and click Monitor.</p>
+          </div>` : `
+        <div class="overflow-hidden rounded-lg border border-slate-100 dark:border-slate-800">
+          <div class="flex bg-slate-50 dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider border-b">
+            <div class="flex-1">File Path</div>
+            <div class="w-36 hidden sm:block">SHA-256</div>
+            <div class="w-20 text-right">Action</div>
+          </div>
+          ${filesInfo.map(f=>`
+          <div class="flex items-center px-4 py-2.5 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <div class="flex-1 flex items-center gap-2 min-w-0">
+              <span class="material-symbols-outlined text-sm shrink-0 ${f.exists?'text-emerald-500':'text-amber-500'}">
+                ${f.exists?'check_circle':'help'}</span>
+              <span class="font-mono text-xs text-slate-600 dark:text-slate-300 truncate">${f.path}</span>
+            </div>
+            <div class="w-36 hidden sm:block font-mono text-xs text-slate-400 px-2 truncate">${f.hash||''}</div>
+            <div class="w-20 flex justify-end">
+              <button onclick="fimRemove('${esc(f.path)}')"
+                class="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-red-500">Remove</button>
+            </div>
+          </div>`).join('')}
+        </div>`}
+      </div>
+
+      ${(integrity.history||[]).length > 0 ? `
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+        <h3 class="font-bold mb-3">Change History</h3>
+        <div class="space-y-1 max-h-48 overflow-y-auto">
+          ${[...(integrity.history||[])].reverse().map(h=>`
+          <div class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs ${h.type==='modified'?'bg-red-50 dark:bg-red-900/20':'bg-amber-50 dark:bg-amber-900/20'}">
+            <span class="material-symbols-outlined text-sm ${h.type==='modified'?'text-red-500':'text-amber-500'}">${h.type==='modified'?'edit':'help'}</span>
+            <span class="font-bold uppercase w-16 shrink-0 ${h.type==='modified'?'text-red-600':'text-amber-600'}">${h.type}</span>
+            <span class="font-mono text-slate-500 truncate flex-1">${h.path}</span>
+            <span class="text-slate-400 shrink-0">${(h.timestamp||'').slice(11,19)}</span>
+          </div>`).join('')}
+        </div>
+      </div>` : ''}`;
+  } catch(e) { el.innerHTML = `<p class="text-red-500">Error: ${e.message}</p>`; }
+}
+
+async function fimAddPath() {
+  const input = document.getElementById('fimAddInput');
+  const path  = input.value.trim();
+  if (!path) return;
+  try {
+    const r = await fetch(`${API}/api/fim/add/${encodeURIComponent(path)}`);
+    const d = await r.json();
+    if (d.success || d.added > 0) { input.value = ''; loadFIM(); showToast(`Monitoring: ${path}`, 'ok'); }
+    else alert('Error: ' + (d.error || 'Could not add path'));
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function fimRemove(path) {
+  if (!confirm('Remove "' + path + '" from monitoring?')) return;
+  try {
+    await fetch(`${API}/api/fim/remove`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({path}) });
+    loadFIM();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function fimRebaseline(path) {
+  if (!confirm('Accept current state of "' + path + '" as new baseline?')) return;
+  try {
+    await fetch(`${API}/api/fim/rebaseline`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({path}) });
+    loadFIM();
+    showToast('Baseline updated for: ' + path, 'ok');
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── Logs ──────────────────────────────────────────────────────────────────────
+async function loadLogs() {
+  const el = document.getElementById('logsContent');
+  el.innerHTML = '<p class="text-slate-400">Loading…</p>';
+  try {
+    const r = await fetch(`${API}/api/logs`);
+    const d = await r.json();
+    const ig = d.integrity || {};
+    el.innerHTML = `
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        ${[['Failed Logins',  d.failed_logins,  'text-red-500'],
+           ['Success Logins', d.success_logins, 'text-emerald-500'],
+           ['Sudo Events',    d.sudo_events,    'text-amber-500'],
+           ['Syslog Errors',  d.syslog_errors,  'text-orange-500'],
+          ].map(([l,v,c])=>`
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 text-center">
+            <p class="text-xs text-slate-500 font-bold uppercase mb-2">${l}</p>
+            <p class="text-3xl font-black ${c}">${v}</p>
+          </div>`).join('')}
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        ${card(`<h3 class="font-bold mb-3">Log Sources</h3>
+          ${kv('Auth Log',   d.auth_log||'Not found')}
+          ${kv('Syslog',     d.syslog||'Not found')}
+          ${kv('Platform',   d.platform||'unknown')}
+          ${kv('SSH Events', d.ssh_events)}
+          ${kv('Warnings',   d.syslog_warnings)}`)}
+        ${(d.suspicious_ips||[]).length > 0
+          ? card(`<h3 class="font-bold mb-3 text-red-600">Suspicious IPs</h3>
+              ${d.suspicious_ips.map(ip=>`
+              <div class="flex justify-between py-1.5 border-b border-slate-50 text-sm">
+                <span class="font-mono text-red-600">${ip.ip}</span>
+                <span class="font-bold">${ip.count} attempts</span>
+              </div>`).join('')}`)
+          : card(`<h3 class="font-bold mb-3 text-emerald-600">No Suspicious IPs</h3>
+              <p class="text-sm text-slate-500">No IPs with repeated failed login attempts.</p>`)}
+        ${(d.recent_failed||[]).length > 0 ? card(`<h3 class="font-bold mb-3">Recent Failed Logins</h3>
+          <div class="space-y-1">${d.recent_failed.slice(0,5).map(l=>`
+            <p class="text-xs font-mono bg-slate-50 dark:bg-slate-800 p-2 rounded truncate">${l}</p>`).join('')}
+          </div>`) : ''}
+        ${(d.recent_errors||[]).length > 0 ? card(`<h3 class="font-bold mb-3">Recent Errors</h3>
+          <div class="space-y-1">${d.recent_errors.slice(0,5).map(l=>`
+            <p class="text-xs font-mono bg-slate-50 dark:bg-slate-800 p-2 rounded truncate">${l}</p>`).join('')}
+          </div>`) : ''}
+        ${(d.active_sessions||[]).length > 0 ? card(`<h3 class="font-bold mb-3">Active Sessions</h3>
+          ${d.active_sessions.map(s=>kv(s.user, s.terminal+' · '+s.started.slice(11,16))).join('')}`) : ''}
+      </div>`;
+  } catch(e) { el.innerHTML = `<p class="text-red-500">Error: ${e.message}</p>`; }
+}
+
+// ── Password ──────────────────────────────────────────────────────────────────
+async function analyzePwd() {
+  const pwd = document.getElementById('pwdDash').value;
+  if (!pwd) return;
+  try {
+    const r = await fetch(`${API}/api/password/${encodeURIComponent(pwd)}`);
+    const d = await r.json();
+    document.getElementById('pwdDashResult').classList.remove('hidden');
+    const colors    = {'Very Weak':'text-red-500','Weak':'text-orange-500','Fair':'text-yellow-600','Strong':'text-emerald-600','Very Strong':'text-blue-600'};
+    const barColors = {'Very Weak':'bg-red-500','Weak':'bg-orange-500','Fair':'bg-yellow-500','Strong':'bg-emerald-500','Very Strong':'bg-blue-500'};
+    document.getElementById('pwdDashStrength').textContent = `${d.strength} (${d.score}/100)`;
+    document.getElementById('pwdDashStrength').className   = `font-bold ${colors[d.strength]||'text-slate-600'}`;
+    document.getElementById('pwdDashBar').style.width      = d.score + '%';
+    document.getElementById('pwdDashBar').className        = `h-2 rounded-full transition-all duration-500 ${barColors[d.strength]||'bg-slate-400'}`;
+    const checks = d.checks;
+    document.getElementById('pwdDashChecks').innerHTML = [
+      ['Lowercase',checks.has_lowercase],['Uppercase',checks.has_uppercase],
+      ['Numbers',checks.has_digit],['Special',checks.has_special],
+      ['Length≥12',checks.length_ok],['Not Common',checks.not_common],
+    ].map(([l,v])=>`<div class="flex flex-col items-center p-2 rounded ${v?'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600':'bg-red-50 dark:bg-red-900/20 text-red-500'}">
+      <span class="material-symbols-outlined text-sm mb-0.5">${v?'check':'close'}</span>
+      <span class="text-[10px] font-bold uppercase">${l}</span></div>`).join('');
+    document.getElementById('pwdDashMeta').innerHTML = `
+      <p>Length: <strong>${d.password_length}</strong> chars</p>
+      <p>Entropy: <strong>${d.entropy}</strong> bits/char</p>
+      <p>Crack time: <strong>${d.crack_time}</strong></p>`;
+    document.getElementById('pwdDashSuggestions').innerHTML = d.suggestions.length
+      ? '<p class="text-xs font-bold text-slate-500 uppercase mb-2">Suggestions</p>' +
+        d.suggestions.map(s=>`<div class="flex items-start gap-2 text-sm text-amber-700"><span class="material-symbols-outlined text-amber-500 !text-base mt-0.5">lightbulb</span>${s}</div>`).join('')
+      : '<p class="text-sm text-emerald-600 font-semibold">Great password! No improvements needed.</p>';
+  } catch(e) { alert('API error: ' + e.message); }
+}
+
+function toggleDashPwd() {
+  const inp = document.getElementById('pwdDash');
+  const eye = document.getElementById('dashEye');
+  if (inp.type==='password'){inp.type='text';eye.textContent='visibility_off';}
+  else{inp.type='password';eye.textContent='visibility';}
+}
+
+// ── Export PDF ────────────────────────────────────────────────────────────────
+async function exportPDF() {
+  showToast('Generating PDF report…', 'low');
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const d = _lastDashData;
+    const now = new Date().toLocaleString();
+
+    // Header
+    doc.setFillColor(11, 125, 218);
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(20); doc.setFont('helvetica','bold');
+    doc.text('Guardian Desk — Security Report', 14, 18);
+    doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('Generated: ' + now, 14, 25);
+
+    let y = 40;
+
+    // Risk Score
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.text('Risk Score', 14, y);
+    doc.setFontSize(28);
+    const rcolor = d ? (d.risk_score >= 70 ? [220,38,38] : d.risk_score >= 40 ? [217,119,6] : [22,163,74]) : [100,100,100];
+    doc.setTextColor(...rcolor);
+    doc.text((d ? d.risk_score : '—') + '/100', 14, y+14);
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(10); doc.setFont('helvetica','normal');
+    const label = d ? (d.risk_score>=70?'High Risk':d.risk_score>=40?'Medium Risk':'Low Risk') : 'Unknown';
+    doc.text(label, 14, y+22);
+    y += 34;
+
+    // Alerts
+    doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
+    doc.text('Active Alerts', 14, y); y += 7;
+    if (d && d.alerts.length) {
+      d.alerts.forEach(a => {
+        const c = a.level==='high'?[220,38,38]:a.level==='medium'?[217,119,6]:[37,99,235];
+        doc.setTextColor(...c);
+        doc.setFontSize(9); doc.setFont('helvetica','bold');
+        doc.text('[' + a.level.toUpperCase() + ']', 14, y);
+        doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
+        doc.text(a.msg, 38, y);
+        y += 7;
+      });
+    } else {
+      doc.setFontSize(9); doc.setTextColor(22,163,74);
+      doc.text('No active alerts', 14, y); y += 7;
+    }
+    y += 5;
+
+    // Summary Stats
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text('System Summary', 14, y); y += 8;
+    if (d && d.summary) {
+      const s = d.summary;
+      const rows = [
+        ['Processes Running', s.processes],
+        ['Open Ports', s.open_ports],
+        ['Network Devices', s.network_devices],
+        ['Failed Logins', s.failed_logins],
+        ['Files Monitored (FIM)', s.fim_monitored],
+        ['Files Modified (FIM)', s.fim_modified],
+      ];
+      rows.forEach(([k,v]) => {
+        doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+        doc.text(k + ':', 14, y);
+        doc.setTextColor(0,0,0); doc.setFont('helvetica','bold');
+        doc.text(String(v), 80, y);
+        y += 7;
+      });
+    }
+    y += 5;
+
+    // Alert history
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text('Alert History (' + alertHistory.length + ' events)', 14, y); y += 8;
+    if (alertHistory.length) {
+      alertHistory.slice(0,15).forEach(a => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+        doc.text(new Date(a.timestamp).toLocaleString(), 14, y);
+        const c = a.level==='high'?[220,38,38]:a.level==='medium'?[217,119,6]:[37,99,235];
+        doc.setTextColor(...c); doc.setFont('helvetica','bold');
+        doc.text('['+a.level.toUpperCase()+']', 65, y);
+        doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
+        doc.text(a.msg.slice(0,70), 90, y);
+        y += 6;
+      });
+    } else {
+      doc.setFontSize(9); doc.setTextColor(100,100,100);
+      doc.text('No alert history recorded.', 14, y);
+    }
+
+    // Footer
+    doc.setFontSize(8); doc.setTextColor(150,150,150);
+    doc.text('Guardian Desk — Cybersecurity Toolkit', 14, 285);
+    doc.text('Page 1', 185, 285);
+
+    doc.save('guardian-desk-report-' + new Date().toISOString().slice(0,10) + '.pdf');
+    showToast('PDF report downloaded!', 'ok');
+  } catch(e) {
+    showToast('PDF export failed: ' + e.message, 'medium');
+  }
+}
+
+// ── Refresh All ───────────────────────────────────────────────────────────────
+async function loadAll() {
+  const icon = document.getElementById('refreshIcon');
+  icon.classList.add('spin');
+  await loadDashboard();
+  if (currentSection==='network') await loadNetwork();
+  if (currentSection==='fim')     await loadFIM();
+  if (currentSection==='logs')    await loadLogs();
+  icon.classList.remove('spin');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function routeHash() {
+  const hash = location.hash.replace('#','');
+  if (['network','fim','logs','password','history'].includes(hash)) showSection(hash);
+}
+
+renderHistory();
+updateHistoryBadge();
+loadDashboard();
+routeHash();
+window.addEventListener('hashchange', routeHash);
+if (autoRefresh) startAutoRefresh();
+</script>
+</body>
+</html>

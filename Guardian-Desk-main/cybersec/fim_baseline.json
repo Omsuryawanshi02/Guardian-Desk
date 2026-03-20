@@ -1,0 +1,529 @@
+{
+  "paths": [
+    "C:\\Windows\\System32\\drivers\\etc\\hosts",
+    "C:\\Windows\\System32\\drivers\\etc\\networks",
+    "C:\\Windows\\System32\\drivers\\etc\\services",
+    "C:\\Windows\\System32\\drivers\\etc\\protocol",
+    "C:\\Windows\\win.ini",
+    "C:\\Windows\\system.ini"
+  ],
+  "hashes": {
+    "C:\\Windows\\System32\\drivers\\etc\\hosts": "726a585105547fce02c17895ac645774a5dfadf9c3a9dd57f8a9dcb84c7d931b",
+    "C:\\Windows\\System32\\drivers\\etc\\networks": "21de93ed8293dbb9c53b59a5c1af04b1fd997cf7dfbd0ba5f21cb315d845b7a8",
+    "C:\\Windows\\System32\\drivers\\etc\\services": "c1723f7f29b224c42f26452c3efa8f80f6ee8500ee78513e0c0732ba55399f7d",
+    "C:\\Windows\\System32\\drivers\\etc\\protocol": "52cf86496f3859d0f3e58776eccff1d6589792004d2291d3b0ce8d7635be7278",
+    "C:\\Windows\\win.ini": "6b3d6e268dcb76e175a7db3d9e031349ab2c32654c7e57581a851e64dd6214ab",
+    "C:\\Windows\\system.ini": "6f533ccc79227e38f18bfc63bfc961ef4d3ee0e2bf33dd097ccf3548a12b743b"
+  },
+  "added_at": {
+    "C:\\Windows\\System32\\drivers\\etc\\hosts": "2026-03-18T15:26:10.332076",
+    "C:\\Windows\\System32\\drivers\\etc\\networks": "2026-03-18T15:26:10.334167",
+    "C:\\Windows\\System32\\drivers\\etc\\services": "2026-03-18T15:26:10.334912",
+    "C:\\Windows\\System32\\drivers\\etc\\protocol": "2026-03-18T15:26:10.335493",
+    "C:\\Windows\\win.ini": "2026-03-18T15:26:10.336311",
+    "C:\\Windows\\system.ini": "2026-03-18T15:26:10.337058"
+  },
+  "history": [
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:52:32.715561"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:52:33.879132"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:52:39.674615"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:52:40.496451"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:52:49.650733"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:53:00.467705"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:53:51.437771"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:54:04.201623"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:54:50.643343"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:55:47.419455"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:56:27.424430"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:56:27.840510"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:56:31.118225"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:56:35.290465"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:56:53.193276"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:56:56.247776"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:56:59.647454"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:57:01.184579"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:57:04.316908"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:57:08.114418"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:57:12.522504"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:57:29.970106"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:57:34.665212"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:57:37.041070"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:57:50.007306"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T15:58:41.072509"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:00:18.234972"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:00:21.163406"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:00:23.879333"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:00:26.792346"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:00:28.005334"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:00:40.925390"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:00:53.764585"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:01:04.202561"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:01:04.584085"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:01:40.044139"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:03:33.849503"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:03:37.156097"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:03:39.613616"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:03:44.316292"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:03:53.533898"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:04:14.296964"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:04:14.757848"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:04:45.285197"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:04:45.682659"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:05:10.270887"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:05:10.642062"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:05:40.408380"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:05:49.666004"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:05:52.845027"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:05:57.158086"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:06:03.285769"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:06:07.676985"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:06:08.983749"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:06:20.742544"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:06:21.149067"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:06:44.436763"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:06:44.865089"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:08:49.249884"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:08:53.014478"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:08:55.372060"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:09:04.279292"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:09:08.380517"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:14:54.128119"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:14:56.025697"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:14:58.933801"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:15:04.292516"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:15:04.920605"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:15:09.429204"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:15:15.795224"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:15:17.298423"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:16:45.205750"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:16:48.205642"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:16:54.352372"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:17:03.303242"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:17:26.968350"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:17:27.318746"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:18:54.704882"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:18:55.118856"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:19:26.705602"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:19:27.102285"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:19:59.374706"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:20:02.219267"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:20:08.296302"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:20:18.400432"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:20:38.366457"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:20:38.702548"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:21:10.378000"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:21:10.723425"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:21:31.620080"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:21:34.271374"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:21:39.624455"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:21:53.851106"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:21:54.253446"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:22:04.759324"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:22:09.870385"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:22:10.304775"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:22:23.655110"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:22:24.106222"
+    },
+    {
+      "type": "missing",
+      "path": "D:\\cybersec\\test_file.txt",
+      "timestamp": "2026-03-18T16:22:41.871545"
+    }
+  ],
+  "updated": "2026-03-18T16:38:47.154283"
+}
